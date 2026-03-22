@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bad Decisions Simulator: Kant Edition 🧐</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0c1a;--card:#1a1630;--card2:#221e3a;--border:#3d3560;
+  --accent:#f7c948;--accent2:#ff6b6b;--moral:#43e97b;--chaos:#ff6b6b;
+  --purple:#a78bfa;--text:#f0eaff;--muted:#8b80b0;--blue:#60a5fa;--radius:18px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'Nunito',sans-serif;background:var(--bg);
+  min-height:100vh;color:var(--text);overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 0%,rgba(167,139,250,.12) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%,rgba(96,165,250,.1) 0%,transparent 60%),
+    radial-gradient(ellipse 40% 80% at 50% 50%,rgba(247,201,72,.04) 0%,transparent 70%);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    radial-gradient(1px 1px at 10% 20%,rgba(255,255,255,.6) 0%,transparent 100%),
+    radial-gradient(1px 1px at 30% 70%,rgba(255,255,255,.4) 0%,transparent 100%),
+    radial-gradient(1px 1px at 60% 15%,rgba(255,255,255,.5) 0%,transparent 100%),
+    radial-gradient(1px 1px at 80% 55%,rgba(255,255,255,.3) 0%,transparent 100%),
+    radial-gradient(1px 1px at 45% 85%,rgba(255,255,255,.4) 0%,transparent 100%),
+    radial-gradient(1px 1px at 70% 40%,rgba(255,255,255,.5) 0%,transparent 100%),
+    radial-gradient(1px 1px at 15% 60%,rgba(255,255,255,.3) 0%,transparent 100%),
+    radial-gradient(1px 1px at 90% 80%,rgba(255,255,255,.4) 0%,transparent 100%);
+}
+#app{max-width:680px;margin:0 auto;padding:20px 16px 40px;position:relative;z-index:1;}
+.screen{display:none;animation:fadeUp .45s cubic-bezier(.23,1,.32,1);}
+.screen.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:translateY(0);}}
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:28px 26px;margin-bottom:16px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--purple),var(--accent),var(--accent2));}
+/* TITLE */
+.logo-area{text-align:center;padding:36px 20px 10px;}
+.kant-big-emoji{font-size:5rem;display:block;animation:kanFloat 3s ease-in-out infinite;}
+@keyframes kanFloat{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-12px) rotate(2deg);}}
+.game-title{font-family:'Bangers',cursive;font-size:clamp(2.4rem,7vw,3.6rem);letter-spacing:2px;line-height:1.05;color:var(--accent);text-shadow:0 0 30px rgba(247,201,72,.5),3px 3px 0 rgba(0,0,0,.5);margin:10px 0 4px;}
+.game-subtitle{font-family:'Bangers',cursive;font-size:clamp(1.1rem,3vw,1.5rem);color:var(--purple);letter-spacing:3px;}
+.kant-tagline{color:var(--muted);font-size:.95rem;font-style:italic;margin:14px auto;max-width:400px;line-height:1.6;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:rgba(167,139,250,.06);}
+/* INPUT */
+.field-label{font-weight:700;font-size:.9rem;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:block;}
+.name-input{width:100%;padding:14px 18px;background:var(--card2);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:700;outline:none;transition:border-color .2s,box-shadow .2s;text-align:center;}
+.name-input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(247,201,72,.15);}
+.name-input::placeholder{color:var(--muted);}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;cursor:pointer;transition:all .18s;text-align:center;}
+.btn-start{width:100%;margin-top:14px;font-size:1.15rem;background:linear-gradient(135deg,#f7c948,#f59e0b);color:#1a1208;box-shadow:0 6px 24px rgba(247,201,72,.35);}
+.btn-start:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(247,201,72,.5);}
+.btn-next{width:100%;margin-top:14px;background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;box-shadow:0 6px 20px rgba(167,139,250,.3);display:none;}
+.btn-next:hover{transform:translateY(-2px);}
+.btn-play-again{background:linear-gradient(135deg,#f7c948,#f59e0b);color:#1a1208;flex:1;box-shadow:0 4px 16px rgba(247,201,72,.3);}
+.btn-lb{background:var(--card2);border:2px solid var(--border);color:var(--text);flex:1;}
+.btn-play-again:hover,.btn-lb:hover{transform:translateY(-2px);}
+/* PROGRESS */
+.progress-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.q-counter{font-family:'Bangers',cursive;font-size:1.2rem;letter-spacing:1px;color:var(--accent);}
+.progress-track{height:8px;background:var(--card2);border-radius:4px;overflow:hidden;margin-bottom:18px;border:1px solid var(--border);}
+.progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--accent));transition:width .6s cubic-bezier(.23,1,.32,1);}
+/* SCORES */
+.scores-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.score-card{background:var(--card2);border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;}
+.score-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.score-label{font-size:.8rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;}
+.score-label.kant-l{color:var(--moral);}
+.score-label.chaos-l{color:var(--chaos);}
+.score-val{font-family:'Bangers',cursive;font-size:1.4rem;letter-spacing:1px;}
+.score-val.kant-v{color:var(--moral);}
+.score-val.chaos-v{color:var(--chaos);}
+.bar-track{height:7px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.23,1,.32,1);}
+.bar-kant{background:linear-gradient(90deg,#10b981,#6ee7b7);}
+.bar-chaos{background:linear-gradient(90deg,#ef4444,#fca5a5);}
+/* SCENARIO */
+.scenario-img-wrap{width:100%;height:180px;border-radius:14px;overflow:hidden;margin-bottom:16px;background:var(--card2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative;}
+.scenario-img-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:7rem;filter:drop-shadow(0 4px 16px rgba(0,0,0,.5));animation:scenePop .5s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes scenePop{from{transform:scale(.4);opacity:0;}to{transform:scale(1);opacity:1;}}
+.scenario-img-label{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(0deg,rgba(10,8,22,.9),transparent);padding:12px 14px 8px;font-size:.8rem;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+.scenario-tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;background:rgba(167,139,250,.15);color:var(--purple);border:1px solid rgba(167,139,250,.3);}
+.scenario-title{font-family:'Bangers',cursive;font-size:1.5rem;letter-spacing:1px;color:var(--text);margin-bottom:8px;}
+.scenario-text{font-size:1.05rem;font-weight:600;line-height:1.6;color:var(--text);padding:14px 16px;background:var(--card2);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;margin-bottom:18px;}
+/* CHOICES */
+.choices-label{font-size:.8rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.choice-btn{display:block;width:100%;background:var(--card2);border:2px solid var(--border);border-radius:14px;padding:14px 18px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.98rem;font-weight:700;text-align:left;cursor:pointer;margin-bottom:10px;transition:all .2s;line-height:1.45;}
+.choice-btn:hover:not(:disabled){border-color:var(--accent);background:rgba(247,201,72,.06);transform:translateX(5px);}
+.choice-btn:disabled{cursor:default;transform:none;}
+.choice-btn.picked-moral{border-color:var(--moral);background:rgba(67,233,123,.1);color:var(--moral);}
+.choice-btn.picked-chaos{border-color:var(--chaos);background:rgba(255,107,107,.1);color:var(--chaos);}
+.choice-letter{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:rgba(255,255,255,.08);font-size:.8rem;font-weight:900;margin-right:10px;flex-shrink:0;vertical-align:middle;}
+/* FEEDBACK */
+.feedback-box{display:none;border-radius:16px;padding:18px 20px;margin-top:14px;animation:feedIn .4s cubic-bezier(.23,1,.32,1);}
+@keyframes feedIn{from{opacity:0;transform:scale(.95);}to{opacity:1;transform:scale(1);}}
+.feedback-box.moral-fb{background:rgba(67,233,123,.08);border:2px solid rgba(67,233,123,.35);}
+.feedback-box.chaos-fb{background:rgba(255,107,107,.08);border:2px solid rgba(255,107,107,.35);}
+.feedback-verdict{font-family:'Bangers',cursive;font-size:1.3rem;letter-spacing:1px;margin-bottom:8px;}
+.feedback-verdict.mv{color:var(--moral);}
+.feedback-verdict.cv{color:var(--chaos);}
+.feedback-main{font-size:.95rem;font-weight:600;line-height:1.6;color:var(--text);margin-bottom:10px;}
+.kant-principle{font-size:.88rem;font-style:italic;color:var(--blue);padding:8px 12px;background:rgba(96,165,250,.08);border-radius:8px;border-left:3px solid var(--blue);line-height:1.5;}
+.kant-reaction{margin-top:10px;font-size:.88rem;font-weight:700;color:var(--muted);text-align:right;}
+/* END */
+.end-hero{text-align:center;padding:10px 0 4px;}
+.end-big-emoji{font-size:5.5rem;display:block;animation:kanFloat 2s ease-in-out infinite;}
+.end-title{font-family:'Bangers',cursive;font-size:2.4rem;letter-spacing:2px;color:var(--accent);margin:10px 0 4px;text-shadow:0 0 20px rgba(247,201,72,.4);}
+.end-sub{color:var(--muted);font-size:1rem;font-style:italic;margin-bottom:18px;}
+.end-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.stat-box{background:var(--card2);border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;}
+.stat-num{font-family:'Bangers',cursive;font-size:2.8rem;letter-spacing:1px;}
+.stat-num.k{color:var(--moral);}
+.stat-num.c{color:var(--chaos);}
+.stat-lbl{font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+.verdict-box{font-size:.97rem;font-weight:600;line-height:1.7;padding:16px 18px;background:var(--card2);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;margin-bottom:18px;}
+.end-btns{display:flex;gap:12px;}
+/* LEADERBOARD */
+.lb-title{font-family:'Bangers',cursive;font-size:1.5rem;letter-spacing:2px;color:var(--accent);margin-bottom:12px;text-align:center;}
+.lb-live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(67,233,123,.12);border:1px solid rgba(67,233,123,.3);color:var(--moral);font-size:.75rem;font-weight:800;letter-spacing:1px;padding:3px 10px;border-radius:20px;margin-left:8px;vertical-align:middle;}
+.lb-live-dot{width:7px;height:7px;border-radius:50%;background:var(--moral);animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.7);}}
+.lb-table{width:100%;border-collapse:collapse;}
+.lb-table th{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.lb-table td{padding:9px 10px;font-size:.9rem;font-weight:700;border-bottom:1px solid rgba(61,53,96,.4);}
+.lb-rank{color:var(--accent);font-family:'Bangers',cursive;font-size:1.1rem;width:36px;}
+.lb-name-cell{color:var(--text);}
+.lb-kant-cell{color:var(--moral);text-align:right;}
+.lb-chaos-cell{color:var(--chaos);text-align:right;}
+.lb-title-cell{color:var(--purple);font-size:.78rem;font-weight:700;}
+.lb-time-cell{color:var(--muted);font-size:.78rem;text-align:right;}
+.lb-empty{text-align:center;color:var(--muted);font-style:italic;padding:20px;}
+.lb-loading{text-align:center;color:var(--muted);padding:16px;animation:fadePulse 1s infinite;}
+@keyframes fadePulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.lb-you-row td{background:rgba(247,201,72,.06);}
+.lb-you-tag{display:inline-block;padding:1px 7px;border-radius:8px;font-size:.7rem;background:rgba(247,201,72,.2);color:var(--accent);border:1px solid rgba(247,201,72,.3);margin-left:6px;}
+/* SOUND / MODAL */
+#soundBtn{position:fixed;top:16px;right:16px;z-index:200;background:var(--card);border:1.5px solid var(--border);border-radius:50%;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:transform .15s;}
+#soundBtn:hover{transform:scale(1.1);}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:300;align-items:center;justify-content:center;padding:16px;}
+.modal-backdrop.open{display:flex;animation:fadeUp .3s ease;}
+.modal-box{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:26px 22px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto;}
+.modal-box::-webkit-scrollbar{width:4px;}
+.modal-box::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.modal-close{float:right;background:var(--card2);border:none;color:var(--muted);cursor:pointer;border-radius:8px;padding:4px 12px;font-size:1rem;font-weight:700;}
+.modal-close:hover{color:var(--text);}
+/* INFO BANNER */
+.info-banner{display:flex;align-items:flex-start;gap:10px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:.88rem;line-height:1.5;color:var(--blue);}
+.info-banner .icon{font-size:1.2rem;flex-shrink:0;margin-top:1px;}
+/* RANK FLASH */
+.rank-flash{display:none;text-align:center;margin:10px 0;font-family:'Bangers',cursive;font-size:1.4rem;letter-spacing:2px;color:var(--accent);animation:rankPop .5s cubic-bezier(.175,.885,.32,1.275);}
+@keyframes rankPop{from{transform:scale(.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+/* DB STATUS */
+.db-status{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:8px;}
+.db-status.ok{background:rgba(67,233,123,.12);color:var(--moral);border:1px solid rgba(67,233,123,.3);}
+.db-status.err{background:rgba(255,107,107,.12);color:var(--chaos);border:1px solid rgba(255,107,107,.3);}
+.db-status.checking{background:rgba(139,128,176,.12);color:var(--muted);border:1px solid rgba(139,128,176,.3);}
+</style>
+</head>
+<body>
+
+<button id="soundBtn" title="Toggle Sound">🔊</button>
+
+<!-- FULL LEADERBOARD MODAL -->
+<div class="modal-backdrop" id="lbModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeLbModal()">✕ Close</button>
+    <div class="lb-title">
+      🌏 Class Leaderboard
+      <span class="lb-live-badge"><span class="lb-live-dot"></span>LIVE</span>
+    </div>
+    <div class="info-banner">
+      <span class="icon">🌐</span>
+      <span>This leaderboard is <strong>shared with your whole class</strong> via Supabase. Every score is saved to a real database!</span>
+    </div>
+    <table class="lb-table">
+      <thead><tr>
+        <th>#</th><th>Name</th><th>Title</th>
+        <th style="text-align:right">⭐ Kant</th>
+        <th style="text-align:right">💥 Chaos</th>
+        <th style="text-align:right">🕐 Time</th>
+      </tr></thead>
+      <tbody id="fullLbBody"><tr><td colspan="6" class="lb-loading">Loading leaderboard...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="app">
+
+<!-- ══ START SCREEN ══ -->
+<div class="screen active" id="startScreen">
+  <div class="logo-area">
+    <span class="kant-big-emoji">🧐</span>
+    <div class="game-title">BAD DECISIONS</div>
+    <div class="game-subtitle">SIMULATOR: KANT EDITION</div>
+    <p class="kant-tagline">
+      "Act only according to rules you'd want <em>everyone</em> to follow."<br>
+      — Immanuel Kant<br>
+      <small style="color:var(--accent);font-size:.8rem">(He was watching you the whole time 👀)</small>
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="info-banner">
+      <span class="icon">🌏</span>
+      <span><strong>Shared Class Leaderboard!</strong> Your score will be visible to all classmates in real-time via Supabase.</span>
+    </div>
+    <div style="text-align:center;margin-bottom:14px;">
+      <span class="db-status checking" id="dbStatus">⏳ Connecting to database...</span>
+    </div>
+
+    <label class="field-label" for="pName">Your philosopher name:</label>
+    <input class="name-input" id="pName" type="text" placeholder="e.g. Average Student 😅" maxlength="24">
+
+    <div style="margin-top:20px;">
+      <div class="lb-title" style="font-size:1.1rem;text-align:left;margin-bottom:10px;">
+        🏆 Top Classmates
+        <span class="lb-live-badge"><span class="lb-live-dot"></span>LIVE</span>
+      </div>
+      <table class="lb-table">
+        <thead><tr><th>#</th><th>Name</th><th>Title</th><th style="text-align:right">⭐</th><th style="text-align:right">💥</th></tr></thead>
+        <tbody id="miniLbBody"><tr><td colspan="5" class="lb-loading">Connecting...</td></tr></tbody>
+      </table>
+    </div>
+
+    <button class="btn btn-start" onclick="startGame()">⚖️ Begin the Moral Reckoning</button>
+  </div>
+</div>
+
+<!-- ══ GAME SCREEN ══ -->
+<div class="screen" id="gameScreen">
+  <div class="progress-header">
+    <span class="q-counter" id="qCounter">Question 1 / 15</span>
+    <span id="playerTag" style="font-size:.85rem;font-weight:700;color:var(--muted)"></span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="scores-row">
+    <div class="score-card">
+      <div class="score-top"><span class="score-label kant-l">⭐ Kant Score</span><span class="score-val kant-v" id="kantVal">0</span></div>
+      <div class="bar-track"><div class="bar-fill bar-kant" id="kantBar" style="width:0%"></div></div>
+    </div>
+    <div class="score-card">
+      <div class="score-top"><span class="score-label chaos-l">💥 Chaos Level</span><span class="score-val chaos-v" id="chaosVal">0</span></div>
+      <div class="bar-track"><div class="bar-fill bar-chaos" id="chaosBar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="scenario-img-wrap">
+      <div class="scenario-img-bg" id="scenarioImg">📚</div>
+      <div class="scenario-img-label" id="scenarioImgLabel">Situation</div>
+    </div>
+    <div class="scenario-tag" id="scenarioTag">School Life</div>
+    <div class="scenario-title" id="scenarioTitle"></div>
+    <div class="scenario-text" id="scenarioText"></div>
+    <div class="choices-label">🤔 What do you do?</div>
+    <div id="choicesArea"></div>
+    <div class="feedback-box" id="feedbackBox">
+      <div class="feedback-verdict" id="feedVerdict"></div>
+      <div class="feedback-main" id="feedMain"></div>
+      <div class="kant-principle" id="feedPrinciple"></div>
+      <div class="kant-reaction" id="feedReaction"></div>
+    </div>
+    <button class="btn btn-next" id="nextBtn" onclick="nextQ()">Next Question →</button>
+  </div>
+</div>
+
+<!-- ══ END SCREEN ══ -->
+<div class="screen" id="endScreen">
+  <div class="card">
+    <div class="end-hero">
+      <span class="end-big-emoji" id="endEmoji">🎓</span>
+      <div class="end-title" id="endTitle">Kant's Verdict</div>
+      <div class="end-sub" id="endSub"></div>
+    </div>
+    <div class="end-stats">
+      <div class="stat-box"><div class="stat-num k" id="finalKant">0</div><div class="stat-lbl">⭐ Kant Score</div></div>
+      <div class="stat-box"><div class="stat-num c" id="finalChaos">0</div><div class="stat-lbl">💥 Chaos Level</div></div>
+    </div>
+    <div class="rank-flash" id="rankFlash"></div>
+    <div class="verdict-box" id="verdictBox"></div>
+    <div class="lb-title" style="font-size:1.1rem;margin-bottom:10px;">
+      🌏 Class Leaderboard
+      <span class="lb-live-badge"><span class="lb-live-dot"></span>LIVE</span>
+    </div>
+    <table class="lb-table" style="margin-bottom:16px;">
+      <thead><tr><th>#</th><th>Name</th><th>Title</th><th style="text-align:right">⭐</th><th style="text-align:right">💥</th><th style="text-align:right">🕐</th></tr></thead>
+      <tbody id="endLbBody"><tr><td colspan="6" class="lb-loading">Saving your score...</td></tr></tbody>
+    </table>
+    <div class="end-btns">
+      <button class="btn btn-play-again" onclick="playAgain()">🔄 Play Again</button>
+      <button class="btn btn-lb" onclick="openLbModal()">🏆 Full Board</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  🔧 SUPABASE CONFIG
+//  Replace these two values with your own from supabase.com
+// ══════════════════════════════════════════════
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// ══════════════════════════════════════════════
+
+// ── Supabase REST helpers ──
+const SB = {
+  headers: {
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Prefer': 'return=representation',
+  },
+  async select(table, params = '') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${params}`, { headers: this.headers });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+  async insert(table, body) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
+      method: 'POST', headers: this.headers, body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+  },
+};
+
+// ── DB status check ──
+async function checkDB() {
+  const el = document.getElementById('dbStatus');
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+    el.className = 'db-status err';
+    el.textContent = '⚠️ Database not configured yet';
+    return false;
+  }
+  try {
+    await SB.select('leaderboard', 'limit=1');
+    el.className = 'db-status ok';
+    el.textContent = '✅ Database connected';
+    return true;
+  } catch {
+    el.className = 'db-status err';
+    el.textContent = '❌ Database connection failed';
+    return false;
+  }
+}
+
+// ── Fetch leaderboard ──
+async function lbFetch() {
+  return SB.select(
+    'leaderboard',
+    'select=name,kant_score,chaos_level,title,played_at&order=kant_score.desc,chaos_level.asc&limit=20'
+  );
+}
+
+// ── Save score ──
+async function lbSave(name, kant, chaos, title) {
+  return SB.insert('leaderboard', { name, kant_score: kant, chaos_level: chaos, title });
+}
+
+// ── Render leaderboard rows ──
+const MEDALS = ['🥇','🥈','🥉'];
+function renderLB(data, tbody, showTime, myName) {
+  if (!data || !data.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="lb-empty">No philosophers yet — be the first!</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map((e, i) => {
+    const isMe = myName && e.name === myName;
+    const time = e.played_at
+      ? new Date(e.played_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      : '';
+    return `<tr class="${isMe ? 'lb-you-row' : ''}">
+      <td class="lb-rank">${MEDALS[i] || '#' + (i+1)}</td>
+      <td class="lb-name-cell">${e.name}${isMe ? '<span class="lb-you-tag">YOU</span>' : ''}</td>
+      <td class="lb-title-cell">${e.title}</td>
+      <td class="lb-kant-cell">+${e.kant_score}</td>
+      <td class="lb-chaos-cell">${e.chaos_level}</td>
+      ${showTime ? `<td class="lb-time-cell">${time}</td>` : ''}
+    </tr>`;
+  }).join('');
+}
+
+async function loadMiniLB() {
+  try {
+    const data = await lbFetch();
+    renderLB(data.slice(0,5), document.getElementById('miniLbBody'), false, '');
+  } catch {
+    document.getElementById('miniLbBody').innerHTML =
+      `<tr><td colspan="5" class="lb-empty" style="color:var(--chaos)">Could not load — check Supabase config</td></tr>`;
+  }
+}
+
+// ════════════════════════════════
+//  SOUND
+// ════════════════════════════════
+let sfxOn = true;
+const AC = (() => { try { return new (window.AudioContext||window.webkitAudioContext)(); } catch(e) { return null; } })();
+function tone(f,t,d,v=.25){if(!sfxOn||!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);o.start();o.stop(AC.currentTime+d);}
+const SFX={
+  click:()=>tone(900,'sine',.08,.15),
+  moral:()=>{[523,659,784].forEach((f,i)=>setTimeout(()=>tone(f,'sine',.18),i*110));},
+  immoral:()=>{[330,311,294].forEach((f,i)=>setTimeout(()=>tone(f,'sawtooth',.14,.18),i*90));},
+  fanfare:()=>{[523,587,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',.22),i*90));},
+  chaos:()=>{[220,196,185,165].forEach((f,i)=>setTimeout(()=>tone(f,'sawtooth',.16,.2),i*80));},
+  mixed:()=>{tone(440,'sine',.15);setTimeout(()=>tone(392,'triangle',.15),200);},
+};
+document.getElementById('soundBtn').addEventListener('click',()=>{sfxOn=!sfxOn;document.getElementById('soundBtn').textContent=sfxOn?'🔊':'🔇';});
+
+// ════════════════════════════════
+//  SCENARIOS
+// ════════════════════════════════
+const SCENARIOS=[
+  {emoji:'😴',tag:'School Life',imgLabel:'Monday Morning Struggle',title:'The Bed vs. The Brain',
+  text:'Your brain says "study, the exam is in 2 hours" but your bed says "just 5 more minutes 😴" — and honestly your bed is very persuasive. Your alarm has gone off 4 times.',
+  choices:[
+    {text:'A) 🛌 Snooze one more time. Five minutes won\'t matter... probably.',moral:false,kDelta:-10,cDelta:+14,main:'If everyone skipped study time for "5 more minutes," academic achievement would become pure lottery.',principle:'According to Kant, your duty to self-improvement cannot be universalized as "sleep when obligations call." Chaos follows.',reaction:'Kant pulled all-nighters voluntarily. He is unimpressed. 🧐'},
+    {text:'B) ☕ Force yourself up, splash cold water, chug coffee.',moral:true,kDelta:+12,cDelta:-6,main:'Self-discipline in pursuit of your duties is perfectly universalizable.',principle:'Kant calls this acting from duty — doing the right thing even when your body revolts. This is pure moral will.',reaction:'Kant: "THAT is the categorical imperative in action!" ✅'},
+    {text:'C) 📱 Wake up but lie in bed scrolling TikTok instead.',moral:false,kDelta:-8,cDelta:+10,main:'You\'re technically awake but substituting one avoidance for another.',principle:'Kant would say you\'re rationalizing non-duty as duty. Same chaos, slightly warmer.',reaction:'Kant: "You opened your eyes but not your mind." 🤦'},
+    {text:'D) 📖 Study in bed. Best of both worlds!',moral:true,kDelta:+6,cDelta:-2,main:'Creative compromise! Fulfilling your academic duty while managing physical needs.',principle:'Kant allows for practical wisdom — fulfilling duties pragmatically is still fulfilling duties.',reaction:'Kant: "Unconventional... but I respect the commitment." 🤔'},
+  ]},
+  {emoji:'📋',tag:'Academic Integrity',imgLabel:'The Homework Crisis',title:'Copy-Paste Ethics 101',
+  text:'"Bro just let me copy the homework real quick, the teacher won\'t even check" your friend whispers 30 seconds before class. Your homework is... not done. At all.',
+  choices:[
+    {text:'A) 📄 Copy it fast. Survival of the fittest.',moral:false,kDelta:-12,cDelta:+16,main:'If everyone copied homework, grades would mean nothing.',principle:'Kant: this maxim self-destructs when universalized. The very concept of homework collapses.',reaction:'Kant is filing a formal complaint with your school. 📝'},
+    {text:'B) 🙅 Refuse and submit nothing — take the zero with honor.',moral:true,kDelta:+14,cDelta:-8,main:'Taking the consequences of your own inaction is the most Kantian move available.',principle:'Kant says duty sometimes means accepting loss. Integrity over grade.',reaction:'Kant: "You failed the assignment but passed ethics." 🎓'},
+    {text:'C) 😅 Copy it but change a few words so it feels less wrong.',moral:false,kDelta:-9,cDelta:+11,main:'Half-hearted deception is still deception.',principle:'"Deceive academically but only a little" still fails universalizability.',reaction:'Kant: "Changing 3 words doesn\'t change the maxim." 😤'},
+    {text:'D) ✏️ Do the homework during the first 10 minutes of class.',moral:true,kDelta:+8,cDelta:-3,main:'Taking personal responsibility for your own work. No one is harmed.',principle:'Kant approves of making things right through your own effort.',reaction:'Kant: "Chaotic, but autonomous. I can work with this." 😅'},
+  ]},
+  {emoji:'🤫',tag:'Friendship Drama',imgLabel:'The Secret Crisis',title:'The Birthday Surprise Bomb',
+  text:'Your friend stares you dead in the eyes and asks: "Are you planning something for my birthday?" A surprise party is happening this Saturday. You panic.',
+  choices:[
+    {text:'A) 🎭 "Noooo, absolutely nothing!" (Full lie, panicked smile)',moral:false,kDelta:-10,cDelta:+12,main:'Kant was famously strict: lying is wrong even with good intentions.',principle:'"Lie to protect feelings when convenient" cannot be universalized without destroying truth.',reaction:'Kant literally wrote a whole essay against lying. He is heated. 😤'},
+    {text:'B) 😅 "I might know... things. But I\'m not saying anything."',moral:true,kDelta:+9,cDelta:-4,main:'You avoided a full lie while preserving discretion.',principle:'Truthfulness without full disclosure is closer to universalizable than outright deception.',reaction:'Kant: "Technically acceptable. I still prefer full honesty, but fine." 🤷'},
+    {text:'C) 🥳 Tell them everything. Honesty is the best policy!',moral:true,kDelta:+12,cDelta:-6,main:'Pure honesty, even at personal cost.',principle:'If everyone told the truth always, trust would be the foundation of all relationships.',reaction:'Kant: "Finally! Someone who truly gets it." 🎉 (Your friend cried though.)'},
+    {text:'D) 🏃 Pretend your phone is ringing and run away.',moral:false,kDelta:-7,cDelta:+8,main:'Avoidance is a cowardly cousin of deception.',principle:'Kant: your duty is to respond honestly, not to escape the moral situation.',reaction:'Kant: "You literally ran from your duty." 😂'},
+  ]},
+  {emoji:'🎮',tag:'Responsibility',imgLabel:'The Gaming All-Nighter',title:'The Exam Eve Temptation',
+  text:'"Bro the squad is doing an all-night gaming session. Exam\'s tomorrow. We\'ll review in the morning. Come on, it\'ll be fine 😭" — your friends text at 10pm.',
+  choices:[
+    {text:'A) 🕹️ YOLO. All-nighter gaming, cram at dawn.',moral:false,kDelta:-11,cDelta:+14,main:'If everyone partied before exams, academic standards would vanish.',principle:'Kant says we have a duty to develop ourselves. Sabotaging your learning violates this.',reaction:'Kant studied 16 hours a day and loved it. He feels no sympathy. 📚'},
+    {text:'B) 😴 Decline, study for 2 hours, sleep properly.',moral:true,kDelta:+14,cDelta:-8,main:'The most universalizable academic practice.',principle:'Acting from duty means doing what\'s right for self-development even when the squad calls.',reaction:'Kant: "This is virtue. Raw, boring, beautiful virtue." ✨'},
+    {text:'C) 🌙 Join for 1 hour then go home to study.',moral:true,kDelta:+7,cDelta:-3,main:'A compromise that respects both social bonds and academic duty.',principle:'Kant allows practical wisdom. You\'re still prioritizing duty, just not robotically.',reaction:'Kant: "Moderation is not his specialty but he accepts this." 🤔'},
+    {text:'D) 📱 Game all night and wing the exam on confidence alone.',moral:false,kDelta:-13,cDelta:+17,main:'"Wing exams on vibes" is not universalizable.',principle:'Kant: self-deception about readiness is dishonesty toward yourself and others.',reaction:'Kant is writing your name in his Moral Failure Journal. 📖'},
+  ]},
+  {emoji:'💸',tag:'Honesty',imgLabel:'The Cashier Mistake',title:'Free Money or Moral Test?',
+  text:'The cashier gives you ₱200 too much in change. You\'re about to leave. Your friends didn\'t see. The cashier is already serving the next customer.',
+  choices:[
+    {text:'A) 💰 Pocket it. What they don\'t know won\'t hurt them.',moral:false,kDelta:-14,cDelta:+18,main:'If everyone kept accidental overpayments, businesses couldn\'t operate.',principle:'Kant: "Take accidental money when unnoticed" — universalized, destroys commercial trust.',reaction:'Kant: "You used someone\'s mistake as a means for personal gain." 😡'},
+    {text:'B) 🤝 Immediately return it.',moral:true,kDelta:+14,cDelta:-9,main:'Honesty and respect for property are fully universalizable.',principle:'This is acting from pure duty — you gain nothing except moral integrity. Kant\'s favorite.',reaction:'Kant gives you a standing ovation from 1804. 👏👏'},
+    {text:'C) 🤔 Keep it, tell yourself you\'ll donate it later.',moral:false,kDelta:-8,cDelta:+10,main:'"Take what isn\'t yours but promise to compensate later" is rationalization.',principle:'Kant: good will must precede the action, not be invented after to justify it.',reaction:'Kant: "You\'ve discovered motivated reasoning." 🙃'},
+    {text:'D) 😬 Keep half, return half. Compromise!',moral:false,kDelta:-6,cDelta:+8,main:'"Keep half of someone else\'s money" is still theft, just slower.',principle:'Kant: partial honesty is still partial dishonesty. The maxim fails.',reaction:'Kant: "You invented a new type of wrong." 😑'},
+  ]},
+  {emoji:'📱',tag:'Classroom Etiquette',imgLabel:'Phone Under the Desk',title:'The Scroll Temptation',
+  text:'Your professor is explaining something important. Your phone buzzes. It\'s a meme. Now you\'re on TikTok. The professor is still talking.',
+  choices:[
+    {text:'A) 📲 Keep scrolling. They\'re not even watching.',moral:false,kDelta:-10,cDelta:+13,main:'If all students browsed phones during lectures, learning would collapse.',principle:'Kant: you\'re using your professor\'s time and your tuition money as means for entertainment.',reaction:'Kant would have loved lectures. He would not appreciate you wasting them. 😤'},
+    {text:'B) 📵 Put the phone face-down and refocus.',moral:true,kDelta:+12,cDelta:-7,main:'Respecting educational spaces benefits everyone.',principle:'Universalizable! Kant calls this self-command — mastering impulses to fulfill duty.',reaction:'Kant: "You chose reason over dopamine. That\'s philosophy." ✅'},
+    {text:'C) 🎧 Put phone away but daydream instead.',moral:false,kDelta:-5,cDelta:+6,main:'Mental absence replaces digital absence. Still failing your educational duty.',principle:'Kant: the duty is to engage with learning, not merely to appear present.',reaction:'Kant: "The phone is gone. Your attention is also gone." 🙄'},
+    {text:'D) ✏️ Put phone away and actually take notes.',moral:true,kDelta:+14,cDelta:-8,main:'Fully engaging with education is the most universalizable student behavior.',principle:'Acting from duty toward self-development with full commitment.',reaction:'Kant: "MAXIMUM POINTS. I wish I had you in my 1780s lectures." 🎓'},
+  ]},
+  {emoji:'🤧',tag:'Public Health',imgLabel:'The Sick-But-FOMO Dilemma',title:'Sick Day or Power Through?',
+  text:'You wake up with a sore throat, sneezes every 5 minutes, and a 37.8°C fever. But there\'s a group project meeting and your friends are counting on you.',
+  choices:[
+    {text:'A) 😷 Go anyway. I\'ll sit far from everyone.',moral:false,kDelta:-9,cDelta:+15,main:'If all sick people attended gatherings, disease would spread uncontrollably.',principle:'Kant\'s second formulation: you\'re using your groupmates as means for your own FOMO.',reaction:'Kant: "You infected the entire group. Good intentions, catastrophic universalization." 🦠'},
+    {text:'B) 🏠 Stay home, message the group, contribute remotely.',moral:true,kDelta:+14,cDelta:-9,main:'Balances duty to your team with duty to public health.',principle:'If all sick people stayed home but contributed virtually, health and productivity are both protected.',reaction:'Kant: "You protected others while fulfilling duty. Masterful." ✅'},
+    {text:'C) 💊 Take medicine and pretend you\'re fine.',moral:false,kDelta:-7,cDelta:+11,main:'Suppressing symptoms doesn\'t eliminate contagion.',principle:'Kant: honesty about your condition is a duty. Pretending endangers others.',reaction:'Kant: "You lied to yourself first. That\'s the worst kind of lie." 😔'},
+    {text:'D) 📞 Skip entirely with no explanation.',moral:false,kDelta:-8,cDelta:+9,main:'Abandoning obligations without communication fails your duty to the group.',principle:'Kant says duty includes communication. Ghosting your team is not universalizable.',reaction:'Kant: "Duty doesn\'t disappear when you have a sore throat." 😤'},
+  ]},
+  {emoji:'🌳',tag:'Environment',imgLabel:'The Lazy Litterer',title:'The Trash Can Conspiracy',
+  text:'You\'re eating a snack outside. The nearest trash can is 50 meters away. It\'s hot. Your legs are tired. The ground is already dirty. Nobody is watching.',
+  choices:[
+    {text:'A) 🗑️ Drop it. The janitors get paid for this.',moral:false,kDelta:-12,cDelta:+16,main:'If everyone littered because janitors exist, the environment would be buried in trash.',principle:'Kant: "Janitors exist to maintain cleanliness, not to justify creating filth."',reaction:'Kant believes in environmental ethics. He\'s logging this incident. 🌍'},
+    {text:'B) 👜 Walk the 50 meters to the trash can.',moral:true,kDelta:+12,cDelta:-8,main:'Taking responsibility for your own waste is perfectly universalizable.',principle:'Kant: duty doesn\'t depend on distance or convenience.',reaction:'Kant: "Fifty meters of virtue. That\'s the categorical imperative in sneakers." 👟'},
+    {text:'C) 🧹 Leave it, plan to pick it up "on the way back."',moral:false,kDelta:-6,cDelta:+8,main:'People rarely return to pick up litter. Deferred duty is abandoned duty.',principle:'Kant: duty means acting now, not scheduling it for a future self who might also be lazy.',reaction:'Kant: "Future You is not a moral agent. Present You is." 🤨'},
+    {text:'D) 👐 Pocket it until you find a bin.',moral:true,kDelta:+10,cDelta:-6,main:'Carrying your own trash until disposal is fully universalizable.',principle:'Acting from duty without reward. The definition of Kantian virtue.',reaction:'Kant: "You made your pocket uncomfortable for moral reasons. Respect." 🫡'},
+  ]},
+  {emoji:'📸',tag:'Social Media',imgLabel:'The Viral Photo Dilemma',title:'Post or Not to Post?',
+  text:'You caught your friend in an absolutely hilarious, deeply unflattering moment on camera. This photo would break the internet. They have no idea you took it.',
+  choices:[
+    {text:'A) 📤 Post it. They\'ll find it funny eventually. (They won\'t.)',moral:false,kDelta:-15,cDelta:+17,main:'Sharing someone\'s image without consent uses them as a means for your social media validation.',principle:'"Post embarrassing photos without consent" universalized → privacy destroyed for everyone.',reaction:'Kant: "You violated dignity AND trust. Two-for-one moral failure." 😡'},
+    {text:'B) 🤝 Ask permission first, let them decide.',moral:true,kDelta:+14,cDelta:-9,main:'Respecting autonomy and seeking consent honors your friend as an end in themselves.',principle:'Kant\'s second formulation: treat others as ends, never merely as means.',reaction:'Kant: "This is what human dignity looks like in practice." ✅'},
+    {text:'C) 😂 Show it to just one close friend, never post it.',moral:false,kDelta:-6,cDelta:+7,main:'Still sharing without consent, just at a smaller scale.',principle:'Kant: the number of people who see a violation doesn\'t determine whether it\'s a violation.',reaction:'Kant: "Small chaos is still chaos." 🙄'},
+    {text:'D) 🗑️ Delete it. Not everything needs to be content.',moral:true,kDelta:+12,cDelta:-7,main:'Respecting someone\'s dignity even when they\'d never know is the highest Kantian virtue.',principle:'If everyone deleted potentially harmful photos, online life would be far more humane.',reaction:'Kant: "You did the right thing with zero audience. True moral character." 🏆'},
+  ]},
+  {emoji:'🤝',tag:'Commitments',imgLabel:'The Cancelled Plan',title:'The Better Offer Problem',
+  text:'You promised to help a friend study on Saturday. Now a much more exciting invite just dropped. Your friend doesn\'t know yet. You could easily make up an excuse.',
+  choices:[
+    {text:'A) 😬 Cancel with a fake excuse. "Family emergency!" (No emergency.)',moral:false,kDelta:-14,cDelta:+18,main:'Breaking promises via deception is doubly wrong: lying AND violating a commitment.',principle:'Kant was absolutely firm: lying to break a promise violates two duties simultaneously.',reaction:'Kant: "You lied to break a promise. Textbook immorality." 🚨'},
+    {text:'B) 💪 Keep your promise. The other invite can wait.',moral:true,kDelta:+15,cDelta:-10,main:'Keeping commitments even when better options arise is the paradigm Kantian act.',principle:'"Keep promises regardless of better options" — universalizable, creates extraordinary social trust.',reaction:'Kant: "This. THIS is pure practical reason. Finally!" 🎉'},
+    {text:'C) 😅 Be honest: "Something came up, can we reschedule?"',moral:true,kDelta:+9,cDelta:-5,main:'Honesty and respect — rescheduling honors the commitment differently but not dishonestly.',principle:'Truthful communication while seeking to fulfill duty is universalizable.',reaction:'Kant: "You told the truth and sought a solution. Morally acceptable." 👍'},
+    {text:'D) 🤷 Just ghost them and hope they forget.',moral:false,kDelta:-12,cDelta:+15,main:'Ghosting is abandonment of duty AND communication.',principle:'Kant: your duty includes communicating, not just showing up.',reaction:'Kant: "You ghosted someone who trusted you." 😤'},
+  ]},
+  {emoji:'💬',tag:'Gossip',imgLabel:'The Rumor Relay',title:'Hot Tea, Cold Conscience',
+  text:'Your friend group is passing around JUICY unverified gossip about a classmate. Everyone\'s laughing. They look at you: "Tell everyone what you know!"',
+  choices:[
+    {text:'A) ☕ Spill it. The tea is hot and everyone\'s thirsty.',moral:false,kDelta:-13,cDelta:+16,main:'Spreading unverified information violates someone\'s reputation without their knowledge.',principle:'Kant: using someone\'s reputation as entertainment treats them as a means.',reaction:'Kant never gossiped. He was also never invited to parties. Correlation? Maybe. 🫖'},
+    {text:'B) 🤐 Refuse to participate and say why.',moral:true,kDelta:+14,cDelta:-9,main:'Breaking the gossip chain protects someone\'s dignity and might influence others.',principle:'Kant: you treated the absent classmate as an end in themselves.',reaction:'Kant: "You spoke up for someone who wasn\'t there. That\'s moral courage." 🎓'},
+    {text:'C) 😶 Stay quiet and let others talk without joining.',moral:true,kDelta:+7,cDelta:-3,main:'Passive non-participation stops the chain without confrontation.',principle:'Not contributing is better than contributing. Partial virtue counts.',reaction:'Kant: "You didn\'t add to the harm. Could\'ve done more, but acceptable." 🤷'},
+    {text:'D) 😂 Add something made up to make the story better.',moral:false,kDelta:-16,cDelta:+20,main:'Fabricating gossip: lying AND spreading unverified info AND harming reputation. Triple violation.',principle:'Kant: you\'ve now lied, violated dignity, AND worsened the chaos. Worst possible choice.',reaction:'Kant: "You invented new wrongness." 💀'},
+  ]},
+  {emoji:'🎓',tag:'Academic Integrity',imgLabel:'The Exam Cheat Sheet',title:'The Forbidden Notes',
+  text:'You spot your classmate using a hidden cheat sheet during the exam. They notice you. They slide it toward you. The professor is looking elsewhere.',
+  choices:[
+    {text:'A) 📄 Use it. Free answers, minimum effort.',moral:false,kDelta:-15,cDelta:+19,main:'If everyone cheated on exams, grades would lose all meaning.',principle:'"Use cheat sheets when available" universalized destroys academic certification entirely.',reaction:'Kant: "You\'ve chosen to corrupt an entire system for 10 easy marks." 😱'},
+    {text:'B) 🙅 Ignore it and focus on your own exam.',moral:true,kDelta:+14,cDelta:-9,main:'Refusing temptation and maintaining integrity is the clearest expression of the categorical imperative.',principle:'If everyone took exams with only their own knowledge, qualifications would actually mean something.',reaction:'Kant: "Pure practical reason, applied perfectly." 🏆'},
+    {text:'C) 👀 Don\'t use it, but also don\'t report it.',moral:true,kDelta:+7,cDelta:-2,main:'Maintaining your own integrity while not actively harming your classmate.',principle:'You didn\'t participate in the wrong. Partial virtue.',reaction:'Kant: "You watched the fire but didn\'t add wood. Acceptable." 🤔'},
+    {text:'D) 📢 Report it to the professor immediately.',moral:true,kDelta:+12,cDelta:-7,main:'Upholding academic integrity actively protects the system everyone depends on.',principle:'Kant: you have a duty to the institution and to fellow honest students.',reaction:'Kant: "You protected the system. Also, you\'re not getting invited to the study group." 🎓'},
+  ]},
+  {emoji:'🌐',tag:'Digital Ethics',imgLabel:'The Piracy Dilemma',title:'Pirates of the Digital Sea',
+  text:'You need paid software for your school project. It costs ₱4,000. You find a pirated version for free. The project is due in 3 days. Your wallet is empty.',
+  choices:[
+    {text:'A) 🏴‍☠️ Download it. Corporations have billions, I have nothing.',moral:false,kDelta:-11,cDelta:+14,main:'If everyone pirated software, developers would earn nothing and stop creating.',principle:'Kant: "Take intellectual property without payment when financially convenient" — universalized, eliminates the creative economy.',reaction:'Kant: "You stole from the person who made the thing you need." 🧐'},
+    {text:'B) 🔍 Find a free/open-source alternative instead.',moral:true,kDelta:+13,cDelta:-7,main:'Creative legal problem-solving that respects intellectual property.',principle:'Kant calls this practical wisdom — finding a universalizable path within constraints.',reaction:'Kant: "You found the synthesis! Overachiever." 🎉'},
+    {text:'C) 📧 Email the company explaining you\'re a student, ask for a discount.',moral:true,kDelta:+12,cDelta:-6,main:'Honest communication and seeking legitimate access is fully universalizable.',principle:'Kant: honesty, self-advocacy, and respect for property rights — all simultaneously.',reaction:'Kant: "Direct, honest, practical. This is ethics applied." ✅'},
+    {text:'D) 🤑 Download it but feel very guilty the whole time.',moral:false,kDelta:-8,cDelta:+10,main:'Guilt doesn\'t make the wrong right. Good will must precede action.',principle:'"Steal but feel bad about it" is not a universalizable maxim.',reaction:'Kant: "Guilt is not penance. It\'s just suffering plus the original wrong." 😔'},
+  ]},
+  {emoji:'🍕',tag:'Social Dynamics',imgLabel:'The Last Slice Standoff',title:'One Slice Remains.',
+  text:'Group pizza. One slice left. Nobody\'s claimed it. You want it. But so might someone else. Everyone is in conversation. You could grab it silently or... not.',
+  choices:[
+    {text:'A) 🤫 Swipe it before anyone notices. Speed is honesty.',moral:false,kDelta:-8,cDelta:+10,main:'Taking shared resources without checking treats others\' needs as less important than yours.',principle:'Kant: "Silently take shared food" — universalized creates a world of self-interested grabbing.',reaction:'Kant: "You treated your hunger as categorically more important than others\'." 🙄'},
+    {text:'B) 🗣️ "Is anyone else eating this?" — ask the group.',moral:true,kDelta:+12,cDelta:-7,main:'Seeking consent before taking shared resources is perfectly universalizable.',principle:'Kant: you\'re treating others as ends by acknowledging their potential desire exists.',reaction:'Kant: "Social contract applied to pizza. He approves." 🍕✅'},
+    {text:'C) ✂️ Cut it in half and offer it around.',moral:true,kDelta:+14,cDelta:-9,main:'Proactively sharing goes beyond duty — fully universalizable and socially excellent.',principle:'You treated everyone at the table as an end in themselves.',reaction:'Kant: "You divided a pizza slice for ethics. Peak practical reason." 🏆'},
+    {text:'D) 👁️ Stare at it intensely until someone says something.',moral:false,kDelta:-4,cDelta:+5,main:'Passive manipulation is dishonesty. You\'re signaling desire without honest communication.',principle:'Kant: passive-aggressive nonverbal communication is not universalizable.',reaction:'Kant: "You communicated via eye contact with food." 😶'},
+  ]},
+  {emoji:'🚦',tag:'Civic Duty',imgLabel:'The Empty Street Red Light',title:'Red Light. No Cars. Big Question.',
+  text:'It\'s 1am. Dead empty street. Red pedestrian light. You can see no cars for 500 meters. You\'ve been waiting 45 seconds. You have places to be.',
+  choices:[
+    {text:'A) 🚶 Cross. I can literally see it\'s safe.',moral:false,kDelta:-9,cDelta:+12,main:'If everyone crossed red lights based on personal safety assessments, traffic laws would be useless.',principle:'Kant: laws only function because they\'re universal. Your personal risk assessment cannot be the universal law.',reaction:'Kant: "You replaced a universal law with your personal opinion. That\'s the whole problem." 🚦'},
+    {text:'B) ⏳ Wait for the green light, no matter what.',moral:true,kDelta:+12,cDelta:-7,main:'Respecting civic rules universally is what makes them work.',principle:'Kant waited for green lights. He also had an exact daily schedule. He finds this very simple.',reaction:'Kant: "Rules don\'t apply only when convenient. That\'s what makes them rules." ✅'},
+    {text:'C) 😤 Cross but feel righteously justified about it.',moral:false,kDelta:-7,cDelta:+9,main:'Feeling justified doesn\'t make something universalizable.',principle:'Kant: self-righteous rule-breaking is still rule-breaking.',reaction:'Kant: "You broke the law AND felt good about it. Double concern." 😬'},
+    {text:'D) 📸 Wait AND photograph the long red light as commentary on urban planning.',moral:true,kDelta:+10,cDelta:-5,main:'You fulfilled your civic duty AND expressed critique through appropriate channels.',principle:'Kant supports civic engagement and law reform through proper means.',reaction:'Kant: "You obeyed the law AND critiqued it properly. Enlightenment citizenship." 🎓'},
+  ]},
+  {emoji:'🤥',tag:'Integrity',imgLabel:'The Resume Temptation',title:'The CV Embellishment Crisis',
+  text:'Job application. You\'re asked about experience with software you\'ve only used twice. "Proficient" feels like a stretch. "Beginner" feels embarrassing. The cursor blinks.',
+  choices:[
+    {text:'A) ✏️ Write "Proficient." You\'ll learn it by the time they notice.',moral:false,kDelta:-12,cDelta:+15,main:'If everyone exaggerated qualifications, hiring would become meaningless.',principle:'"Lie about competence when it helps you get hired" — universalized, destroys professional trust.',reaction:'Kant: "You lied to get something you hadn\'t earned. Textbook wrong." 😡'},
+    {text:'B) 📝 Write "Basic knowledge, actively learning."',moral:true,kDelta:+14,cDelta:-8,main:'Honest self-assessment with growth mindset is perfectly universalizable.',principle:'Kant: full honesty, including about limitations, is the only universalizable hiring practice.',reaction:'Kant: "You told the truth under pressure. That is integrity." ✅'},
+    {text:'C) 🤷 Leave it blank and hope they don\'t notice.',moral:false,kDelta:-7,cDelta:+8,main:'Omission as deception is still deception.',principle:'Kant: a lie of omission is still a lie.',reaction:'Kant: "Silence can be dishonest. You found out." 🤨'},
+    {text:'D) 🏋️ Actually learn the software in 48 hours before applying.',moral:true,kDelta:+12,cDelta:-6,main:'Solving the problem through self-improvement rather than misrepresentation.',principle:'Kant supports self-development through duty. You\'re closing the gap honestly.',reaction:'Kant: "You chose improvement over deception. Excellent moral will." 🌟'},
+  ]},
+  {emoji:'♻️',tag:'Environment',imgLabel:'The Recycling Laziness',title:'Two Bins. Maximum Laziness.',
+  text:'Long day. Two bins right next to each other: trash and recycling. Sorting takes 3 seconds. But you are so deeply, profoundly tired.',
+  choices:[
+    {text:'A) 🗑️ Both go in trash. I\'m tired, not a robot.',moral:false,kDelta:-10,cDelta:+14,main:'If everyone skipped recycling when tired, recyclable materials would fill landfills permanently.',principle:'Kant: "Skip environmental duty when fatigued" — universalized, makes recycling meaningless.',reaction:'Kant: "The planet didn\'t get a day off either." 🌍'},
+    {text:'B) ♻️ Take the 3 seconds. Sort it properly.',moral:true,kDelta:+12,cDelta:-8,main:'If everyone sorted recycling consistently regardless of tiredness, waste reduction would be dramatic.',principle:'Kant: small consistent duties matter because they\'re universal. 3 seconds is still duty.',reaction:'Kant: "You did the right thing while exhausted. That\'s virtue." ✅'},
+    {text:'C) 🤔 Try to sort it but accidentally put it in the wrong bin.',moral:true,kDelta:+7,cDelta:-2,main:'Attempting to fulfill your duty, even imperfectly, is still good will.',principle:'Kant: imperfect execution of a duty still demonstrates good will. Your effort is recognized.',reaction:'Kant: "The will was there. The eyes were not. Points for trying." 😅'},
+    {text:'D) 📸 Take a photo of the confusing bins to report for better labeling.',moral:true,kDelta:+11,cDelta:-6,main:'Fulfilling immediate duty AND working to fix the systemic issue.',principle:'Kant supports addressing root causes through legitimate means.',reaction:'Kant: "Individual virtue AND systemic improvement. Philosophy at scale." 🏆'},
+  ]},
+  {emoji:'🎁',tag:'Digital Ethics',imgLabel:'The Fake Review Situation',title:'5 Stars for Friendship?',
+  text:'Your friend just launched their small business. 0 reviews. They ask you to write a 5-star review even though you\'ve never used their service. "Just to get things started."',
+  choices:[
+    {text:'A) ⭐⭐⭐⭐⭐ Write it. It\'s just to help them.',moral:false,kDelta:-12,cDelta:+16,main:'If everyone wrote fake reviews for friends, the entire review ecosystem would be fraudulent.',principle:'Kant: you\'re using customers as means for your friend\'s profit. AND you\'re lying. Double violation.',reaction:'Kant: "You committed fraud to help a friend. Still fraud." 😡'},
+    {text:'B) ✍️ Write an honest review if you\'ve actually experienced anything.',moral:true,kDelta:+13,cDelta:-8,main:'Honest testimony you can vouch for is fully universalizable.',principle:'Kant: truthful, verifiable statements are the only universalizable form of review.',reaction:'Kant: "Honesty serves everyone in the long run. Including your friend." ✅'},
+    {text:'C) 💪 Help them actually get customers so they earn real reviews.',moral:true,kDelta:+14,cDelta:-9,main:'Solving the real problem through honest means — the most creative Kantian choice.',principle:'Kant: good will combined with practical wisdom.',reaction:'Kant: "You found the ethical AND effective solution. Maximum points." 🏆'},
+    {text:'D) 😬 Write it but put 4 stars to seem more realistic.',moral:false,kDelta:-9,cDelta:+11,main:'4 stars of lying is still lying.',principle:'Kant: the maxim is still "write false reviews when asked by friends." Still wrong.',reaction:'Kant: "You invented a more subtle fraud." 🙄'},
+  ]},
+  {emoji:'🛒',tag:'Civic Honesty',imgLabel:'The Checkout Surprise',title:'The Accidental Windfall',
+  text:'The self-checkout machine glitched. It didn\'t charge you ₱300 worth of items. The receipt is wrong. Nobody saw. The security guard is looking at his phone.',
+  choices:[
+    {text:'A) 🏃 Walk briskly out. Not your fault the machine is broken.',moral:false,kDelta:-13,cDelta:+16,main:'If everyone exploited checkout glitches, stores would raise prices and shut down self-checkouts.',principle:'Kant: "Take goods without payment when machines malfunction" — universalized, makes self-checkout impossible.',reaction:'Kant: "The machine broke. You chose to break your ethics too." 😔'},
+    {text:'B) 🤝 Tell a staff member immediately.',moral:true,kDelta:+15,cDelta:-10,main:'Complete honesty protects the store and maintains the integrity of commercial transactions.',principle:'Kant: acting from duty when there\'s no consequence for dishonesty is the truest test of good will.',reaction:'Kant: "You were honest with nobody watching. That\'s the real categorical imperative." 🏆'},
+    {text:'C) 🤔 Go back and scan the missing items manually.',moral:true,kDelta:+12,cDelta:-7,main:'Taking responsibility for correct payment without involving staff.',principle:'Kant: self-correction of accidental benefit demonstrates duty to honesty.',reaction:'Kant: "You corrected the machine\'s error with your conscience. Outstanding." ✅'},
+    {text:'D) 📱 Post about it online asking if this counts as stealing.',moral:false,kDelta:-5,cDelta:+7,main:'Seeking public validation for what you already know is wrong.',principle:'Kant: moral law doesn\'t require a Twitter poll. You already knew the answer.',reaction:'Kant: "You asked the internet what Kant would do instead of asking Kant." 😐'},
+  ]},
+  {emoji:'🎤',tag:'Social Courage',imgLabel:'The Group Project Disaster',title:'The Silent Witness',
+  text:'Your group project leader is taking all the credit in front of the professor — despite barely contributing. Your teammates look at you. The professor is smiling at the leader.',
+  choices:[
+    {text:'A) 🤐 Stay quiet. Not worth the drama.',moral:false,kDelta:-10,cDelta:+12,main:'Allowing false impressions to persist through silence is passive deception.',principle:'Kant: you have a duty to truth. Silence that allows falsehood to succeed assists it.',reaction:'Kant: "You watched injustice happen and did nothing." 😔'},
+    {text:'B) 🗣️ Politely clarify: "We all contributed — here\'s what each person did."',moral:true,kDelta:+14,cDelta:-8,main:'Correcting the record truthfully and respectfully is fully universalizable.',principle:'Kant: honesty in the face of social pressure is acting from pure duty — the highest moral act.',reaction:'Kant: "You spoke truth to power. With footnotes. Outstanding." ✅'},
+    {text:'C) 😤 Call them out dramatically in front of everyone.',moral:true,kDelta:+7,cDelta:-1,main:'The intent is just, but the method creates unnecessary harm.',principle:'Kant values both truth and human dignity. Humiliating someone may violate their dignity as a person.',reaction:'Kant: "Correct on facts, excessive on drama." 🎭'},
+    {text:'D) 📧 Email the professor privately after class with the real breakdown.',moral:true,kDelta:+12,cDelta:-7,main:'Private honest correction respects both truth and appropriate channels.',principle:'Kant: fulfilling your duty to honesty through proportionate, dignified means is excellent moral judgment.',reaction:'Kant: "Measured, honest, effective. This is mature ethics." 🎓'},
+  ]},
+];
+
+// ════════════════════════════════
+//  GAME STATE
+// ════════════════════════════════
+const G={name:'',kant:0,chaos:0,qi:0,total:15,selected:[],answered:false};
+const MAX_KANT=15*15, MAX_CHAOS=15*20;
+
+function getTitle(kant,chaos){
+  const r=kant/MAX_KANT;
+  if(r>=0.7&&chaos<50)return"😇 Kant's Favorite Student";
+  if(r>=0.4)return"😬 Morally Confused";
+  return"💀 Agent of Chaos";
+}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function setBar(id,pct){document.getElementById(id).style.width=Math.max(0,Math.min(100,pct))+'%';}
+function updateScores(){
+  const kp=(G.kant/MAX_KANT)*100,cp=(G.chaos/MAX_CHAOS)*100;
+  document.getElementById('kantVal').textContent=G.kant;
+  document.getElementById('chaosVal').textContent=G.chaos;
+  setBar('kantBar',kp);setBar('chaosBar',cp);
+}
+
+function renderLBTable(data, tbody, showTime, myName, limit=20) {
+  if(!data||!data.length){tbody.innerHTML=`<tr><td colspan="6" class="lb-empty">No philosophers yet — be the first!</td></tr>`;return;}
+  const medals=['🥇','🥈','🥉'];
+  tbody.innerHTML=data.slice(0,limit).map((e,i)=>{
+    const isMe=myName&&e.name===myName;
+    const time=e.played_at?new Date(e.played_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+    return`<tr class="${isMe?'lb-you-row':''}">
+      <td class="lb-rank">${medals[i]||(i+1)}</td>
+      <td class="lb-name-cell">${e.name}${isMe?'<span class="lb-you-tag">YOU</span>':''}</td>
+      <td class="lb-title-cell">${e.title}</td>
+      <td class="lb-kant-cell">+${e.kant_score}</td>
+      <td class="lb-chaos-cell">${e.chaos_level}</td>
+      ${showTime?`<td class="lb-time-cell">${time}</td>`:''}
+    </tr>`;
+  }).join('');
+}
+
+async function loadMiniLB(){
+  try{const d=await lbFetch();renderLBTable(d,document.getElementById('miniLbBody'),false,'',5);}
+  catch{document.getElementById('miniLbBody').innerHTML=`<tr><td colspan="5" class="lb-empty" style="color:var(--chaos)">Configure Supabase to see scores</td></tr>`;}
+}
+
+// ════════════════════════════════
+//  GAME FUNCTIONS
+// ════════════════════════════════
+function startGame(){
+  if(AC&&AC.state==='suspended')AC.resume();
+  const raw=document.getElementById('pName').value.trim();
+  G.name=raw||'Anonymous Philosopher';
+  G.kant=0;G.chaos=0;G.qi=0;G.answered=false;
+  G.selected=shuffle(SCENARIOS).slice(0,G.total);
+  SFX.click();updateScores();
+  show('gameScreen');
+  document.getElementById('playerTag').textContent=`👤 ${G.name}`;
+  renderQ();
+}
+
+function renderQ(){
+  G.answered=false;
+  const s=G.selected[G.qi],qNum=G.qi+1;
+  document.getElementById('qCounter').textContent=`Question ${qNum} / ${G.total}`;
+  setBar('progressFill',((qNum-1)/G.total)*100);
+  document.getElementById('scenarioImg').textContent=s.emoji;
+  document.getElementById('scenarioImgLabel').textContent=s.imgLabel;
+  document.getElementById('scenarioTag').textContent=s.tag;
+  document.getElementById('scenarioTitle').textContent=s.title;
+  document.getElementById('scenarioText').textContent=s.text;
+  const fb=document.getElementById('feedbackBox');fb.style.display='none';fb.className='feedback-box';
+  document.getElementById('nextBtn').style.display='none';
+  const letters=['A','B','C','D'];
+  const area=document.getElementById('choicesArea');area.innerHTML='';
+  s.choices.forEach((c,i)=>{
+    const btn=document.createElement('button');btn.className='choice-btn';
+    btn.innerHTML=`<span class="choice-letter">${letters[i]}</span>${c.text.replace(/^[A-D]\) /,'')}`;
+    btn.onclick=()=>pick(i);area.appendChild(btn);
+  });
+}
+
+function pick(idx){
+  if(G.answered)return;G.answered=true;
+  if(AC&&AC.state==='suspended')AC.resume();
+  const s=G.selected[G.qi],c=s.choices[idx];
+  G.kant=Math.max(0,G.kant+c.kDelta);G.chaos=Math.max(0,G.chaos+c.cDelta);
+  updateScores();
+  document.querySelectorAll('.choice-btn').forEach((btn,i)=>{btn.disabled=true;if(i===idx)btn.classList.add(c.moral?'picked-moral':'picked-chaos');});
+  const fb=document.getElementById('feedbackBox');
+  fb.className=`feedback-box ${c.moral?'moral-fb':'chaos-fb'}`;fb.style.display='block';
+  const v=document.getElementById('feedVerdict');
+  v.className=`feedback-verdict ${c.moral?'mv':'cv'}`;
+  v.textContent=c.moral?`✅ Morally Sound! (+${c.kDelta} Kant Score)`:`❌ Chaos Incoming! (+${c.cDelta} Chaos Level)`;
+  document.getElementById('feedMain').textContent=c.main;
+  document.getElementById('feedPrinciple').textContent=`📜 According to Immanuel Kant: ${c.principle}`;
+  document.getElementById('feedReaction').textContent=c.reaction;
+  SFX[c.moral?'moral':'immoral']();
+  const nxt=document.getElementById('nextBtn');nxt.style.display='block';
+  nxt.textContent=G.qi<G.total-1?'Next Question →':"⚖️ See Kant's Final Verdict";
+}
+
+function nextQ(){
+  SFX.click();G.qi++;
+  if(G.qi>=G.total){showEnd();return;}
+  renderQ();
+  document.getElementById('gameScreen').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+async function showEnd(){
+  const ratio=G.kant/MAX_KANT;
+  let emoji,title,sub,verdict;
+  if(ratio>=0.7&&G.chaos<50){
+    emoji='😇';title="Kant's Favorite Student";sub="A paragon of pure practical reason.";
+    verdict=`${G.name}, Kant himself would have you grade his papers. You demonstrated consistent commitment to universalizable maxims — treating people as ends in themselves, never as mere means. The world would be measurably better if everyone followed your moral lead. Kant is beaming somewhere in Königsberg right now.`;
+    SFX.fanfare();
+  }else if(ratio>=0.4){
+    emoji='😬';title="Morally Confused";sub="Good intentions, questionable maxims.";
+    verdict=`${G.name}, you showed flashes of genuine moral clarity but stumbled whenever convenience beckoned. You understand the categorical imperative in theory but struggle to apply it when it's personally costly. Kant recommends re-reading the Groundwork for the Metaphysics of Morals. Perhaps twice.`;
+    SFX.mixed();
+  }else{
+    emoji='💀';title="Agent of Chaos";sub="You have successfully universalized disorder.";
+    verdict=`${G.name}, Kant is filing a formal complaint about your decision-making. If everyone acted as you did, civilization would unravel within the week. Your maxims cannot survive universalization — they self-destruct at scale. But there is hope: philosophy class is still in session.`;
+    SFX.chaos();
+  }
+  document.getElementById('endEmoji').textContent=emoji;
+  document.getElementById('endTitle').textContent=title;
+  document.getElementById('endSub').textContent=sub;
+  document.getElementById('finalKant').textContent=G.kant;
+  document.getElementById('finalChaos').textContent=G.chaos;
+  document.getElementById('verdictBox').textContent=verdict;
+  show('endScreen');
+
+  document.getElementById('endLbBody').innerHTML=`<tr><td colspan="6" class="lb-loading">Saving your score to the class board...</td></tr>`;
+  try{
+    const myTitle=getTitle(G.kant,G.chaos);
+    await lbSave(G.name,G.kant,G.chaos,myTitle);
+    const all=await lbFetch();
+    const myRank=all.findIndex(e=>e.name===G.name&&e.kant_score===G.kant&&e.chaos_level===G.chaos)+1;
+    if(myRank>0){
+      const rf=document.getElementById('rankFlash');
+      rf.textContent=`🎯 You ranked #${myRank} on the class leaderboard!`;
+      rf.style.display='block';
+    }
+    renderLBTable(all,document.getElementById('endLbBody'),true,G.name,5);
+  }catch(e){
+    document.getElementById('endLbBody').innerHTML=`<tr><td colspan="6" class="lb-empty" style="color:var(--chaos)">Could not save score — check Supabase config</td></tr>`;
+  }
+}
+
+async function openLbModal(){
+  SFX.click();
+  document.getElementById('fullLbBody').innerHTML=`<tr><td colspan="6" class="lb-loading">Loading live data...</td></tr>`;
+  document.getElementById('lbModal').classList.add('open');
+  try{const d=await lbFetch();renderLBTable(d,document.getElementById('fullLbBody'),true,G.name,20);}
+  catch{document.getElementById('fullLbBody').innerHTML=`<tr><td colspan="6" class="lb-empty">Failed to load.</td></tr>`;}
+}
+function closeLbModal(){document.getElementById('lbModal').classList.remove('open');}
+document.getElementById('lbModal').addEventListener('click',function(e){if(e.target===this)closeLbModal();});
+
+function playAgain(){
+  SFX.click();
+  document.getElementById('rankFlash').style.display='none';
+  document.getElementById('pName').value='';
+  loadMiniLB();
+  show('startScreen');
+}
+
+// ── INIT ──
+checkDB();
+loadMiniLB();
+</script>
+</body>
+</html>
